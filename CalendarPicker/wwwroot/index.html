@@ -1,0 +1,181 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width" />
+    <title>Calendar Picker</title>
+    <link rel="stylesheet" href="Content/Css/bootstrap.min.css">
+</head>
+<body>
+    <div class="row">
+        <div class="col-sm"></div>
+        <div class="col-sm">
+            <button class="btn" onclick="prevMonth()">
+                Предыдущий
+            </button>
+        </div>
+        <div class="col-sm">
+            <h2 data-bind="text: currentMonthAsStr"></h2>
+        </div>
+        <div class="col-sm">
+            <button class="btn" onclick="nextMonth()">
+                Следующий
+            </button>
+        </div>
+        <div class="col-sm"></div>
+    </div> 
+<div class="row">
+    <div class="col-sm"></div>
+    <div class="col-sm-10">
+        <table class="table table-bordered table-striped" id="calendar">
+            <thead class="thead-light">
+            <tr>
+                <th>ПН</th>
+                <th>ВТ</th>
+                <th>СР</th>
+                <th>ЧТ</th>
+                <th>ПТ</th>
+                <th>СБ</th>
+                <th>ВС</th>
+            </tr>
+            </thead>
+            <tbody data-bind="foreach: monthDays">
+            <tr data-bind="foreach: { data: $data, as: 'weekDate' }">
+                <td data-bind="text: weekDate" onclick="setSelected(this)"></td>
+            </tr>
+            </tbody>
+        </table>
+    </div>
+    <div class="col-sm"></div>
+</div>
+<div class="row">
+    <div class="col-sm"></div>
+    <div class="col-sm">
+        <button class="btn" onclick="saveSelected()">
+            Сохранить выбранное
+        </button>
+    </div>
+    <div class="col-sm"></div>
+</div>
+    <script type="text/javascript" src="Content/Scripts/knockout-3.5.1.js"></script>
+    <script type="text/javascript" src="Content/Scripts/jquery-3.5.1.min.js"></script>
+    <script type="text/javascript" src="Content/Scripts/bootstrap.min.js"></script>
+    <script>
+        "use strict";
+        const apiUrl = "api/v1/StoredDates/";
+        const selectionColor = "#3CB6E8";
+        const transparentColor = "transparent";
+        let checkedDates = [];
+
+        function CalendarViewModel() {
+            var self = this;
+            const monthNames = ["Январь", "Февраль", "Март", "Апрель", "Май", "Июнь", "Июль", "Август", "Сентябрь", "Октябрь", "Ноябрь", "Декабрь"];
+            self.currentMonth = ko.observable(new Date().getMonth());
+            self.currentMonthAsStr = ko.computed(function () {
+                return monthNames[self.currentMonth()];
+            });
+            self.monthDays = ko.computed(function () {
+                return getMonthDays(self.currentMonth());
+            });
+        };
+
+        let viewModel = new CalendarViewModel();
+        ko.applyBindings(viewModel);
+
+        //следующий месяц
+        function nextMonth() {
+            if (viewModel.currentMonth() >= 11) {
+                return;
+            }
+
+            viewModel.currentMonth(viewModel.currentMonth() + 1);
+        }
+
+        //предыдущий месяц
+        function prevMonth() {
+            if (viewModel.currentMonth() <= 0) {
+                return;
+            }
+
+            viewModel.currentMonth(viewModel.currentMonth() - 1);
+        }
+
+        //формирование дат для календаря
+        function getMonthDays(month) {
+            const firstDay = (new Date(2020, month, 1)).getDay();
+            let date = 1;
+            const result = [];
+            const daysInMonth = 32 - new Date(2020, month, 32).getDate();
+
+            for (let i = 0; i < 6; i++) {
+                if (date > daysInMonth)
+                    break;
+
+                const week = [];
+
+                for (let j = 0; j < 7; j++) {
+                    if ((i === 0 && j < firstDay - 1)
+                        || (date > daysInMonth)) {
+                        week[j] = "";
+                    }
+                    else {
+                        week[j] = date;
+                        date++;
+                    }
+                }
+
+                result[i] = week;
+            }
+
+            return result;
+        }
+
+        //добавление-удаление дат из списка выбранных
+        function setSelected(e) {
+            const selected = e.innerHTML;
+
+            if (!selected)
+                return;
+
+            const newDate = new Date(2020, viewModel.currentMonth(), parseInt(selected));
+            const existedId = checkedDates.findIndex((item) =>
+                item.getMonth() === newDate.getMonth() && item.getDay() === newDate.getDay() && item.getYear() === newDate.getYear());
+
+            if (existedId > -1) {
+                checkedDates.splice(existedId, 1);
+                e.style.background = transparentColor;
+            } else {
+                checkedDates.push(newDate);
+                e.style.background = selectionColor;
+            }
+        }
+
+        function clearSelected() {
+
+            checkedDates.splice(0, checkedDates.length);
+        }
+
+        //отправка выборки на сервер
+        async function saveSelected() {
+            if (!checkedDates || checkedDates.length < 1)
+                return;
+
+            const dateSelection = { SelectedDates: checkedDates };
+            const jsn = JSON.stringify(dateSelection);
+            const response = await fetch(apiUrl + "AddDateSelection",
+                {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json;charset=utf-8"
+                    },
+                    body: jsn
+                });
+            const result = await response.json();
+
+            if (result) {
+                clearSelected();
+            }
+        }
+    </script>
+</body>
+</html>
