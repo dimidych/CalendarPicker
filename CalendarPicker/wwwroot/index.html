@@ -130,6 +130,10 @@
             return result;
         }
 
+        function getZero(number) {
+            return number < 10 ? `0${number}` : `${number}`;
+        }
+
         //добавление-удаление дат из списка выбранных
         function setSelected(e) {
             const selected = e.innerHTML;
@@ -137,9 +141,8 @@
             if (!selected)
                 return;
 
-            const newDate = new Date(2020, viewModel.currentMonth(), parseInt(selected));
-            const existedId = checkedDates.findIndex((item) =>
-                item.getMonth() === newDate.getMonth() && item.getDay() === newDate.getDay() && item.getYear() === newDate.getYear());
+            const newDate = `2020-${getZero(viewModel.currentMonth()+1)}-${getZero(parseInt(selected))}`;
+            const existedId = checkedDates.findIndex((item) => item === newDate);
 
             if (existedId > -1) {
                 checkedDates.splice(existedId, 1);
@@ -150,8 +153,20 @@
             }
         }
 
+        //очистка выбранного
         function clearSelected() {
+            const elem = document.getElementById('calendar').getElementsByTagName('td');
+            [].forEach.call(elem, (element) => {
+                checkedDates.forEach((selectedDate) => {
+                    const day = selectedDate.split('-')[2];
 
+                    if ((day[0] === '0' && day[1] == element.innerText)
+                        || (day[0] !== '0' && day == element.innerText)) {
+                        element.style.background = transparentColor;
+                        return;
+                    }
+                });
+            });
             checkedDates.splice(0, checkedDates.length);
         }
 
@@ -161,20 +176,20 @@
                 return;
 
             const dateSelection = { SelectedDates: checkedDates };
-            const jsn = JSON.stringify(dateSelection);
             const response = await fetch(apiUrl + "AddDateSelection",
                 {
                     method: "POST",
                     headers: {
                         "Content-Type": "application/json;charset=utf-8"
                     },
-                    body: jsn
+                    body: JSON.stringify(dateSelection)
                 });
-            const result = await response.json();
 
-            if (result) {
+            if (response.ok) {
                 clearSelected();
-            }
+                alert("Успешно сохранено!");
+            } else
+                alert("Ошибка!!");
         }
     </script>
 </body>

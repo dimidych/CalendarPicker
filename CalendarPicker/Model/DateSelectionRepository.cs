@@ -1,6 +1,7 @@
 ﻿using System.Collections.Generic;
 using System.IO;
 using System.Threading.Tasks;
+using Utf8Json;
 
 namespace CalendarPicker.Model
 {
@@ -13,7 +14,8 @@ namespace CalendarPicker.Model
 
         public Task Add(DateSelection entity)
         {
-            return File.AppendAllTextAsync(FilePath, Utf8Json.JsonSerializer.ToJsonString(entity));
+            var content = JsonSerializer.ToJsonString(entity);
+            return File.AppendAllTextAsync(FilePath, content);
         }
 
         public async Task<IEnumerable<DateSelection>> GetAll()
@@ -23,7 +25,7 @@ namespace CalendarPicker.Model
             var result = new List<DateSelection>();
 
             while ((line = await readStream.ReadLineAsync()) != null)
-                result.Add(Utf8Json.JsonSerializer.Deserialize<DateSelection>(line));
+                result.Add(JsonSerializer.Deserialize<DateSelection>(line));
 
             return result;
         }
