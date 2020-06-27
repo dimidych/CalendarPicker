@@ -21,3 +21,6 @@
 - CalendarPicker\Model\DateSelection.cs - модель данных
 - CalendarPicker\Model\DateSelectionRepository.cs - репозиторий для работы с моделью
 - CalendarPicker\wwwroot\index.html - веб-страница с календарем
+
+Демонстрация работы : 
+https://calendarpicker.azurewebsites.net/
