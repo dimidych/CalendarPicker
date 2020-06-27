@@ -21,7 +21,8 @@ namespace CalendarPicker.Controllers
         [Route("GetDateSelections")]
         public async Task<IEnumerable<DateSelection>> GetDateSelections()
         {
-            return await _repository.GetAll();
+            var result = await _repository.GetAll();
+            return result;
         }
 
         [HttpPost]
